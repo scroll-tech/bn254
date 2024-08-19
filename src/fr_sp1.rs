@@ -458,7 +458,7 @@ impl Neg for Fr {
 
     #[inline]
     fn neg(self) -> Fr {
-        -&self
+        unimplemented!()
     }
 }
 
