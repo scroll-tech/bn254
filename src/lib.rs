@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(unexpected_cfgs)]
 
 #[cfg(not(all(target_os = "zkvm", target_vendor = "succinct")))]
