@@ -16,6 +16,7 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// redirected to syscall_bn254_scalar_arith.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(align(32))]
 pub struct Fr(pub(crate) [u32; 8]);
 
 #[inline]
