@@ -16,10 +16,42 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// redirected to syscall_bn254_scalar_arith.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(align(32))]
 pub struct Fr(pub(crate) [u32; 8]);
 
+const GRUMPKIN_FP_ADD: u32 = 0x00_01_01_56;
+const GRUMPKIN_FP_MUL: u32 = 0x00_01_01_58;
+
+/// a += b
+#[inline(always)]
+pub(crate) fn add_assign(a: *mut Fr, b: *const Fr) {
+   unsafe {
+       asm!(
+            "ecall",
+            in("t0") GRUMPKIN_FP_ADD,
+            in("a0") a,
+            in("a1") b,
+       );
+   }
+}
+
+/// a *= b
+#[inline(always)]
+pub(crate) fn mul_assign(a: *mut Fr, b: *const Fr) {
+    unsafe {
+        asm!(
+            "ecall",
+            in("t0") GRUMPKIN_FP_MUL,
+            in("a0") a,
+            in("a1") b,
+        );
+    }
+}
+
+/*
 #[inline]
 fn syscall_bn254_scalar_mul(p: *mut u32, q: *const u32) {
+    panic!("???");
     const BN254_SCALAR_MUL: u32 = 0x00_01_01_20;
     unsafe {
         asm!(
@@ -32,6 +64,7 @@ fn syscall_bn254_scalar_mul(p: *mut u32, q: *const u32) {
 }
 #[inline]
 fn syscall_bn254_scalar_mac(ret: *mut u32, a: *const u32, b: *const u32) {
+    panic!("???");
     const BN254_SCALAR_MAC: u32 = 0x00_01_01_21;
     unsafe {
         asm!(
@@ -42,7 +75,7 @@ fn syscall_bn254_scalar_mac(ret: *mut u32, a: *const u32, b: *const u32) {
         );
     }
 }
-
+*/
 const MODULUS: Fr = Fr([
     0xf0000001, 0x43e1f593, 0x79b97091, 0x2833e848, 0x8181585d, 0xb85045b6, 0xe131a029, 0x30644e72,
 ]);
@@ -151,6 +184,9 @@ impl Fr {
     }
 
     pub fn mul(&self, rhs: &Self) -> Fr {
+        panic!("mmm");
+        /*
+        mul_assign(
         let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
 
         let src_ptr = self.0.as_ptr() as *const u32;
@@ -164,6 +200,7 @@ impl Fr {
 
         let p = unsafe { p.assume_init() };
         Fr(p)
+        */
     }
 
     pub fn sub(&self, _rhs: &Self) -> Fr {
@@ -171,6 +208,8 @@ impl Fr {
     }
 
     pub fn add(&self, rhs: &Self) -> Fr {
+        panic!("aaa");
+        /*
         let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
 
         let src_ptr = self.0.as_ptr() as *const u32;
@@ -184,6 +223,7 @@ impl Fr {
 
         let p = unsafe { p.assume_init() };
         Fr(p)
+        */
     }
 }
 
@@ -215,11 +255,14 @@ impl ::core::ops::AddAssign<Fr> for Fr {
 impl<'b> ::core::ops::AddAssign<&'b Fr> for Fr {
     #[inline]
     fn add_assign(&mut self, rhs: &'b Fr) {
+        add_assign(self as *mut _, rhs as *const _);
+        /*
         syscall_bn254_scalar_mac(
             self as *mut _ as *mut u32,
             rhs as *const _ as *const u32,
             &ONE as *const _ as *const u32,
         );
+        */
     }
 }
 
@@ -233,7 +276,8 @@ impl core::ops::MulAssign<Fr> for Fr {
 impl<'b> core::ops::MulAssign<&'b Fr> for Fr {
     #[inline]
     fn mul_assign(&mut self, rhs: &'b Fr) {
-        syscall_bn254_scalar_mul(self as *mut _ as *mut u32, rhs as *const _ as *const u32);
+        mul_assign(self as *mut _, rhs as *const _);
+        //syscall_bn254_scalar_mul(self as *mut _ as *mut u32, rhs as *const _ as *const u32);
     }
 }
 
@@ -263,12 +307,18 @@ impl<'a> MulAddAssign<&'a Fr, Fr> for Fr {
 impl<'a, 'b> MulAddAssign<&'a Fr, &'b Fr> for Fr {
     #[inline]
     fn mul_add_assign(&mut self, a: &'a Self, b: &'b Self) {
+        todo!();
+//        mul_assign(self as *mut _, b as *const _);
+  //      add_assign(self as *mut _, a as *const _);
+        /*
         syscall_bn254_scalar_mac(
             self as *mut _ as *mut u32,
             a as *const _ as *const u32,
             b as *const _ as *const u32,
         );
+        */
     }
+
 }
 
 impl ff::Field for Fr {
