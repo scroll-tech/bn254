@@ -16,7 +16,7 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// redirected to syscall_bn254_scalar_arith.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[repr(align(32))]
+#[repr(align(4))]
 pub struct Fr(pub(crate) [u32; 8]);
 
 const GRUMPKIN_FP_ADD: u32 = 0x00_01_01_56;
