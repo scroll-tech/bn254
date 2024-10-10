@@ -21,7 +21,7 @@ pub struct Fr(pub(crate) [u32; 8]);
 
 #[inline]
 fn syscall_bn254_scalar_mul(p: *mut u32, q: *const u32) {
-    const BN254_SCALAR_MUL: u32 = 0x00_01_01_20;
+    const BN254_SCALAR_MUL: u32 = 0x00_01_01_80;
     unsafe {
         asm!(
         "ecall",
@@ -33,7 +33,7 @@ fn syscall_bn254_scalar_mul(p: *mut u32, q: *const u32) {
 }
 #[inline]
 fn syscall_bn254_scalar_mac(ret: *mut u32, a: *const u32, b: *const u32) {
-    const BN254_SCALAR_MAC: u32 = 0x00_01_01_21;
+    const BN254_SCALAR_MAC: u32 = 0x00_01_01_81;
     unsafe {
         asm!(
         "ecall",
@@ -172,6 +172,7 @@ impl Fr {
     }
 
     pub fn add(&self, rhs: &Self) -> Fr {
+        println!("cycle-tracker-start: Fr::add");
         let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
 
         let src_ptr = self.0.as_ptr() as *const u32;
@@ -184,6 +185,7 @@ impl Fr {
         }
 
         let p = unsafe { p.assume_init() };
+        println!("cycle-tracker-end: Fr::add");
         Fr(p)
     }
 }
