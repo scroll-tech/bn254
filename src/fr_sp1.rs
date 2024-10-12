@@ -129,11 +129,11 @@ impl Fr {
     }
 
     pub fn mul(&self, rhs: &Self) -> Fr {
-        let mut p = core::mem::MaybeUninit::<Fr>::uninit();
+        let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
         unsafe {
-            memcpy32(&self.0, core::ptr::addr_of_mut!((*p.as_mut_ptr()).0));
-            syscall_bn254_scalar_mul(core::ptr::addr_of_mut!((*p.as_mut_ptr()).0), &rhs.0);
-            p.assume_init()
+            memcpy32(&self.0, p.as_mut_ptr());
+            syscall_bn254_scalar_mul(p.as_mut_ptr(), &rhs.0);
+            Fr(p.assume_init())
         }
     }
 
@@ -142,14 +142,14 @@ impl Fr {
     }
 
     pub fn add(&self, rhs: &Self) -> Fr {
-        let mut p = core::mem::MaybeUninit::<Fr>::uninit();
+        let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
         // # Safety
         // * Self, rhs are a valid pointer to Fr.
         // * p is initialized before calling syscall_bn254_scalar_mac.
         unsafe {
-            memcpy32(&self.0, core::ptr::addr_of_mut!((*p.as_mut_ptr()).0));
-            syscall_bn254_scalar_mac(core::ptr::addr_of_mut!((*p.as_mut_ptr()).0), &rhs.0, &ONE.0);
-            p.assume_init()
+            memcpy32(&self.0, p.as_mut_ptr());
+            syscall_bn254_scalar_mac(p.as_mut_ptr(), &rhs.0, &ONE.0);
+            Fr(p.assume_init())
         }
     }
 }
