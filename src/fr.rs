@@ -325,7 +325,7 @@ impl<'a> MulAddAssign<&'a Fr, Fr> for Fr {
 
 impl<'a, 'b> MulAddAssign<&'a Fr, &'b Fr> for Fr {
     fn mul_add_assign(&mut self, a: &'a Self, b: &'b Self) {
-        *self = *self + *a + *b;
+        *self += *a * *b;
     }
 }
 
