@@ -4,7 +4,6 @@ use crate::bn256::assembly::field_arithmetic_asm;
 use crate::{field_arithmetic, field_specific};
 
 use crate::arithmetic::{adc, mac, sbb};
-use ff::{FromUniformBytes, PrimeField, WithSmallOrderMulGroup};
 use crate::{
     field_bits, field_common, impl_add_binop_specify_output, impl_binops_additive,
     impl_binops_additive_specify_output, impl_binops_multiplicative,
@@ -14,6 +13,7 @@ use core::convert::TryInto;
 use core::fmt;
 use core::ops::{Add, Mul, Neg, Sub};
 use ff::{ExtraArithmetic, MulAddAssign};
+use ff::{FromUniformBytes, PrimeField, WithSmallOrderMulGroup};
 use rand::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
@@ -327,7 +327,6 @@ impl<'a, 'b> MulAddAssign<&'a Fr, &'b Fr> for Fr {
     fn mul_add_assign(&mut self, a: &'a Self, b: &'b Self) {
         *self = *self + *a + *b;
     }
-
 }
 
 #[cfg(test)]
