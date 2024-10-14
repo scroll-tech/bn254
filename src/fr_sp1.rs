@@ -18,8 +18,8 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 /// redirected to syscall_bn254_scalar_arith.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[repr(align(4))]
-pub struct Fr(pub [u32; 8]);
+#[repr(transparent)]
+pub struct Fr([u32; 8]);
 
 const MODULUS: Fr = Fr([
     0xf0000001, 0x43e1f593, 0x79b97091, 0x2833e848, 0x8181585d, 0xb85045b6, 0xe131a029, 0x30644e72,
@@ -142,14 +142,14 @@ impl Fr {
     }
 
     pub fn add(&self, rhs: &Self) -> Fr {
-        let mut p = core::mem::MaybeUninit::<[u32; 8]>::uninit();
+        let mut p = core::mem::MaybeUninit::<Fr>::uninit();
         // # Safety
         // * Self, rhs are a valid pointer to Fr.
         // * p is initialized before calling syscall_bn254_scalar_mac.
         unsafe {
-            memcpy32(&self.0, p.as_mut_ptr());
+            memcpy32(self, p.as_mut_ptr());
             syscall_bn254_scalar_mac(p.as_mut_ptr(), &rhs.0, &ONE.0);
-            Fr(p.assume_init())
+            p.assume_init()
         }
     }
 }
