@@ -23,6 +23,7 @@ dependencies = [
  "rand",
  "rand_core",
  "serde",
+ "sp1-intrinsics",
  "subtle",
 ]
 
@@ -152,6 +153,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "sp1-intrinsics"
+version = "0.0.0"
+source = "git+https://github.com/scroll-tech/sp1-intrinsics.git?branch=master#7e038e60db0b2e847f6d8f49e148ccac8c6fc394"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]
