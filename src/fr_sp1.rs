@@ -3,9 +3,7 @@ use crate::{
     impl_binops_multiplicative_mixed, impl_sub_binop_specify_output, impl_sum_prod,
 };
 use core::ops::{Add, Mul, Neg, Sub};
-use ff::ExtraArithmetic;
-use ff::PrimeField;
-use ff::{FromUniformBytes, MulAddAssign};
+use ff::{PrimeField, FromUniformBytes};
 use rand::RngCore;
 use sp1_intrinsics::{
     bn254::{syscall_bn254_scalar_mac, syscall_bn254_scalar_mul},
@@ -204,40 +202,6 @@ impl<'b> core::ops::MulAssign<&'b Fr> for Fr {
         // Self and rhs are valid pointers to Fr.
         unsafe {
             syscall_bn254_scalar_mul(&mut self.0, &rhs.0);
-        }
-    }
-}
-
-impl ExtraArithmetic for Fr {}
-
-impl MulAddAssign for Fr {
-    #[inline]
-    fn mul_add_assign(&mut self, a: Self, b: Self) {
-        self.mul_add_assign(&a, &b);
-    }
-}
-
-impl<'a> MulAddAssign<Fr, &'a Fr> for Fr {
-    #[inline]
-    fn mul_add_assign(&mut self, a: Self, b: &'a Self) {
-        self.mul_add_assign(&a, b);
-    }
-}
-
-impl<'a> MulAddAssign<&'a Fr, Fr> for Fr {
-    #[inline]
-    fn mul_add_assign(&mut self, a: &'a Self, b: Self) {
-        self.mul_add_assign(a, &b);
-    }
-}
-
-impl<'a, 'b> MulAddAssign<&'a Fr, &'b Fr> for Fr {
-    #[inline]
-    fn mul_add_assign(&mut self, a: &'a Self, b: &'b Self) {
-        // # Safety
-        // Self, a, and b are valid pointers to Fr.
-        unsafe {
-            syscall_bn254_scalar_mac(&mut self.0, &a.0, &b.0);
         }
     }
 }

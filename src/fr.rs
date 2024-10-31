@@ -1,5 +1,5 @@
 #[cfg(feature = "asm")]
-use crate::bn256::assembly::field_arithmetic_asm;
+use crate::assembly::field_arithmetic_asm;
 #[cfg(not(feature = "asm"))]
 use crate::{field_arithmetic, field_specific};
 
@@ -12,7 +12,6 @@ use crate::{
 use core::convert::TryInto;
 use core::fmt;
 use core::ops::{Add, Mul, Neg, Sub};
-use ff::{ExtraArithmetic, MulAddAssign};
 use ff::{FromUniformBytes, PrimeField, WithSmallOrderMulGroup};
 use rand::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -301,150 +300,4 @@ impl FromUniformBytes<64> for Fr {
 
 impl WithSmallOrderMulGroup<3> for Fr {
     const ZETA: Self = ZETA;
-}
-
-impl ExtraArithmetic for Fr {}
-
-impl MulAddAssign for Fr {
-    fn mul_add_assign(&mut self, a: Self, b: Self) {
-        self.mul_add_assign(&a, &b)
-    }
-}
-
-impl<'a> MulAddAssign<Fr, &'a Fr> for Fr {
-    fn mul_add_assign(&mut self, a: Self, b: &'a Self) {
-        self.mul_add_assign(&a, b)
-    }
-}
-
-impl<'a> MulAddAssign<&'a Fr, Fr> for Fr {
-    fn mul_add_assign(&mut self, a: &'a Self, b: Self) {
-        self.mul_add_assign(a, &b)
-    }
-}
-
-impl<'a, 'b> MulAddAssign<&'a Fr, &'b Fr> for Fr {
-    fn mul_add_assign(&mut self, a: &'a Self, b: &'b Self) {
-        *self += *a * *b;
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::serde::SerdeObject;
-
-    use super::*;
-    use ark_std::{end_timer, start_timer};
-    use ff::Field;
-    use rand::SeedableRng;
-    use rand_core::OsRng;
-    use rand_xorshift::XorShiftRng;
-
-    #[test]
-    fn test_sqrt() {
-        let v = (Fr::TWO_INV).square().sqrt().unwrap();
-        assert!(v == Fr::TWO_INV || (-v) == Fr::TWO_INV);
-
-        for _ in 0..10000 {
-            let a = Fr::random(OsRng);
-            let mut b = a;
-            b = b.square();
-
-            let b = b.sqrt().unwrap();
-            let mut negb = b;
-            negb = negb.neg();
-
-            assert!(a == b || a == negb);
-        }
-    }
-
-    #[test]
-    fn test_field() {
-        crate::tests::field::random_field_tests::<Fr>("bn256 scalar".to_string());
-    }
-
-    #[test]
-    fn test_delta() {
-        assert_eq!(Fr::DELTA, GENERATOR.pow([1u64 << Fr::S]));
-        assert_eq!(Fr::DELTA, Fr::MULTIPLICATIVE_GENERATOR.pow([1u64 << Fr::S]));
-    }
-
-    #[test]
-    fn test_from_u512() {
-        assert_eq!(
-            Fr::from_raw([
-                0x7e7140b5196b9e6f,
-                0x9abac9e4157b6172,
-                0xf04bc41062fd7322,
-                0x1185fa9c9fef6326,
-            ]),
-            Fr::from_u512([
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa,
-                0xaaaaaaaaaaaaaaaa
-            ])
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "bits")]
-    fn test_bits() {
-        crate::tests::field::random_bits_tests::<Fr>("fr".to_string());
-    }
-
-    #[test]
-    fn test_serialization() {
-        crate::tests::field::random_serialization_test::<Fr>("fr".to_string());
-        #[cfg(feature = "derive_serde")]
-        crate::tests::field::random_serde_test::<Fr>("fr".to_string());
-    }
-
-    fn is_less_than(x: &[u64; 4], y: &[u64; 4]) -> bool {
-        match x[3].cmp(&y[3]) {
-            core::cmp::Ordering::Less => return true,
-            core::cmp::Ordering::Greater => return false,
-            _ => {}
-        }
-        match x[2].cmp(&y[2]) {
-            core::cmp::Ordering::Less => return true,
-            core::cmp::Ordering::Greater => return false,
-            _ => {}
-        }
-        match x[1].cmp(&y[1]) {
-            core::cmp::Ordering::Less => return true,
-            core::cmp::Ordering::Greater => return false,
-            _ => {}
-        }
-        x[0].lt(&y[0])
-    }
-
-    #[test]
-    fn test_serialization_check() {
-        let mut rng = XorShiftRng::from_seed([
-            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
-            0xbc, 0xe5,
-        ]);
-        let _message = "serialization fr";
-        let start = start_timer!(|| _message);
-        // failure check
-        for _ in 0..1000000 {
-            let rand_word = [(); 4].map(|_| rng.next_u64());
-            let a = Fr(rand_word);
-            let rand_bytes = a.to_raw_bytes();
-            match is_less_than(&rand_word, &MODULUS.0) {
-                false => {
-                    assert!(Fr::from_raw_bytes(&rand_bytes).is_none());
-                }
-                _ => {
-                    assert_eq!(Fr::from_raw_bytes(&rand_bytes), Some(a));
-                }
-            }
-        }
-        end_timer!(start);
-    }
 }
